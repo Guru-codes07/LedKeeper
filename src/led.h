@@ -4,8 +4,8 @@
    A custom header file that's a part of the LEDKEEPER.
 */
 
-#ifndef LED.H
-#define LED.H
+#ifndef LED_H
+#define LED_H
 
 #include<stddef.h>
 #include<limits.h>
