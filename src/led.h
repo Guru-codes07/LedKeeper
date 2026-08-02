@@ -38,12 +38,19 @@ int led_list_all(led_info_t *out_arr, size_t max_entries, size_t *out_count);
    The above function lists all available LEDs and fills the provided led_info_t array.
 */
 
+/* led_load_from_path - build a led_t from an explicit LED directory
+   path, bypassing auto-detection entirely.
+*/
+int led_load_from_path(const char *path, led_info_t *out);
 
+/* led_read_brightness - read the current brightness value.
+   Returns the value (>= 0) on success, -1 on error.
+*/
+int led_read_brightness(const led_info_t *led);
 
+int led_set_brightness(const led_info_t *led, int value);   // write an arbitrary brightness value.
 
-
-
-
-
+int led_turn_on(const led_info_t *led);
+int led_turn_off(const led_info_t*led);
 
 #endif
