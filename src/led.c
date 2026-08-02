@@ -1,0 +1,31 @@
+// LEDKEEPER - A C project for controlling keyboard LEDs
+// LEDKEEPER V1.0
+
+#define _GNU_SOURCE 
+
+#include"led.h"
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<errno.h>
+#include<dirent.h>
+#include<unistd.h>
+#include<fcntl.h>
+
+// Name variants for "scroll lock" LED across kernel drivers.
+static const char *SCROLLLOCK_NAME_VARIANTS[] = { "scrolllock","scroll_lock","scroll-lock","scrl"};
+#define SCROLLLOCK_PATTERN_COUNT \
+    (sizeof(SCROLLLOCK_NAME_PATTERNS) / sizeof(SCROLLLOCK_NAME_PATTERNS[0]))  // C idiom for an array length operator.
+
+// read_int_file - read a small integer out of a one-line sysfs file.    
+static int read_int_file (const char *path , int *out)
+{
+    int fd = open(path,O_RDONLY);
+    if(fd<=0)
+    {
+        return -1;
+    }
+}
+
+// declaring a buffer
+char buff[32];
