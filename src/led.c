@@ -29,3 +29,24 @@ static int read_int_file (const char *path , int *out)
 
 // declaring a buffer
 char buff[32];
+ssize_t n = read(fd, buff, sizeof(buff) - 1);
+int saved_errno = errno;
+close(fd);
+if (n < 0) 
+{
+    errno = saved_errno;
+    return -1;
+}
+buf[n] = '\0';
+  errno = 0;
+    char *endptr = NULL;
+    long value = strtol(buff, &endptr, 10);
+    if (endptr == buff) {
+        /* No digits parsed at all. */
+        errno = EINVAL;
+        return -1;
+    }
+
+    *out = (int)value;
+    return 0;
+}
