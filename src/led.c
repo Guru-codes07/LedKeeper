@@ -51,3 +51,28 @@ static int read_int_file (const char *path , int *out)
     *out = (int)value;
     return 0;
 }
+
+// write_int_file - write a small integer to a sysfs file as ASCII
+static int write_int_file(const char *path, int value)
+{
+    int fd = open(path, O_WRONLY);
+    if (fd < 0)
+    {
+      return -1;
+    }
+ 
+    char buff[32];
+ int len = snprintf(buff, sizeof(buff), "%d", value);
+ ssize_t written = write(fd, buff, (size_t)len);
+ int saved_errno = errno;
+ close(fd);
+
+  if (written < 0 || written != len) 
+  {
+    errno = (written < 0) ? saved_errno : EIO;
+    return -1;
+  } 
+ 
+  return 0;
+}
+
