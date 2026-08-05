@@ -76,3 +76,36 @@ static int write_int_file(const char *path, int value)
   return 0;
 }
 
+/* name_matches_scrolllock - case-insensitive substring match of
+  `name` against the known Scroll Lock naming variants.
+*/
+static int name_matches_scrolllock(const char *name) 
+{
+  for (size_t i = 0; i < SCROLLLOCK_PATTERN_COUNT; i++) 
+    {
+     if (strcasestr(name, SCROLLLOCK_NAME_PATTERNS[i]) != NULL) 
+    {
+      return 1;
+    }
+    }
+    return 0;
+}
+
+int led_load_from_path(const char *path, led_info_t *out) 
+{
+  if (path == NULL || out == NULL) 
+  {
+    errno = EINVAL;
+    return -1;
+  }
+}
+ memset(out, 0, sizeof(*out));
+   
+ 
+/* Derive the display name from the final path component. */
+const char *slash = strrchr(path, '/');
+const char *base = (slash != NULL) ? slash + 1 : path;
+strncpy(out->name, base, LED_NAME_MAX - 1);
+strncpy(out->dir_path, path, PATH_MAX - 1);
+
+
