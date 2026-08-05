@@ -81,7 +81,7 @@ static int write_int_file(const char *path, int value)
 */
 static int name_matches_scrolllock(const char *name) 
 {
-  for (size_t i = 0; i < SCROLLLOCK_PATTERN_COUNT; i++) 
+  for (size_t i = 0; i < SCROLLLOCK_PATTERN_COUNT; i++)  // contains errors
     {
      if (strcasestr(name, SCROLLLOCK_NAME_PATTERNS[i]) != NULL) 
     {
@@ -99,13 +99,18 @@ int led_load_from_path(const char *path, led_info_t *out)
     return -1;
   }
 }
- memset(out, 0, sizeof(*out));
-   
- 
+ // Have to clear errors from this part onwards
+memset(out, 0, sizeof(*out));
 /* Derive the display name from the final path component. */
 const char *slash = strrchr(path, '/');
 const char *base = (slash != NULL) ? slash + 1 : path;
 strncpy(out->name, base, LED_NAME_MAX - 1);
 strncpy(out->dir_path, path, PATH_MAX - 1);
 
+  int n = snprintf(out->brightness_path, PATH_MAX, "%s/brightness", path);
+  if (n < 0 || n >= PATH_MAX) 
+  {
+    errno = ENAMETOOLONG;
+    return -1;
+  }
 
