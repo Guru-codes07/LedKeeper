@@ -144,5 +144,148 @@ int led_load_from_path(const char *path, led_t *out)
    return 0;
 }
 
+int led_find_scrolllock(led_t *out) 
+{
+ if (out == NULL)
+ {
+   errno = EINVAL;
+   return -1;
+ }
+ DIR *dir = opendir(LED_SYFS_ROOT);
+    if (dir == NULL) 
+    {
+     return -1;
+    }
+
+    struct dirent *entry;
+    int found = 0;
+
+    while ((entry = readdir(dir)) != NULL) 
+    {
+      if (entry->d_name[0] == '.') 
+      {
+        continue;                               /* skip "." and ".." */
+      }
+      
+      if (!name_matches_scrolllock(entry->d_name)) 
+      {
+        continue;
+      }
+
+      char full_path[PATH_MAX];
+      int n = snprintf(full_path, PATH_MAX, "%s/%s", LED_SYFS_ROOT, entry->d_name);
+      if (n < 0 || n >= PATH_MAX) 
+     {
+       continue;
+     }
+     if (led_load_from_path(full_path, out) == 0) 
+     {
+        found = 1;
+        break;
+      }
+          /* Name matched but the directory turned out not to be a
+           * valid LED (missing brightness file) — keep scanning in
+           * case another entry matches too. */
+    }
+
+   closedir(dir);
+   if (!found) 
+   {
+    errno = ENODEV;
+    return -1;
+   }
+
+    return 0;
+}
+
+int led_list_all(led_t *out_arr, size_t max_entries, size_t *out_count) 
+{
+    if (out_arr == NULL || out_count == NULL) 
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+    *out_count = 0;
+
+    DIR *dir = opendir(LED_SYFS_ROOT);
+    if (dir == NULL) 
+    {
+      return -1;
+    }
+
+    struct dirent *entry;
+
+    while ((entry = readdir(dir)) != NULL && *out_count < max_entries) 
+    {
+      if (entry->d_name[0] == '.') 
+      {
+        continue;
+      }
+
+      char full_path[PATH_MAX];
+      int n = snprintf(full_path, PATH_MAX, "%s/%s", LED_SYFS_ROOT, entry->d_name);
+      if (n < 0 || n >= PATH_MAX) 
+      {
+        continue;
+      }
+
+        if (led_load_from_path(full_path, &out_arr[*out_count]) == 0) 
+      {
+        (*out_count)++;
+      }
+    }
+
+    closedir(dir);
+    return 0;
+}
+
+int led_read_brightness(const led_t *led) 
+{
+    if (led == NULL) 
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+    int value = 0;
+    if (read_int_file(led->brightness_path, &value) != 0) 
+    {
+      return -1;
+    }
+
+    return value;
+}
+
+int led_set_brightness(const led_t *led, int value) 
+{
+    if (led == NULL) 
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  return write_int_file(led->brightness_path, value);
+}
+
+int led_turn_on(const led_t *led) 
+{
+    if (led == NULL) 
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+    return led_set_brightness(led, led->max_brightness);
+}
+
+int led_turn_off(const led_t *led) 
+{
+return led_set_brightness(led, 0);
+}
+
+
+
+
 
 
