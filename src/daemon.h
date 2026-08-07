@@ -29,6 +29,6 @@ int daemon_should_exit(void);
 /* daemon_run - run the monitor loop: repeatedly check led's
  brightness, restore it via led_turn_on() whenever it reads as off.
 */
-int daemon_run(const led_info_t *led, const daemon_config_t *config);
+int daemon_run(const led_t *led, const daemon_config_t *config);
 
 #endif

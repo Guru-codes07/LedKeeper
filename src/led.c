@@ -13,7 +13,7 @@
 #include<fcntl.h>
 
 // Name variants for "scroll lock" LED across kernel drivers.
-static const char *SCROLLLOCK_NAME_VARIANTS[] = { "scrolllock","scroll_lock","scroll-lock","scrl"};
+static const char *SCROLLLOCK_NAME_PATTERNS[] = { "scrolllock","scroll_lock","scroll-lock","scrl"};
 #define SCROLLLOCK_PATTERN_COUNT \
     (sizeof(SCROLLLOCK_NAME_PATTERNS) / sizeof(SCROLLLOCK_NAME_PATTERNS[0]))  // C idiom for an array length operator.
 
@@ -91,21 +91,22 @@ static int name_matches_scrolllock(const char *name)
     return 0;
 }
 
-int led_load_from_path(const char *path, led_info_t *out) 
+int led_load_from_path(const char *path, led_t *out) 
 {
   if (path == NULL || out == NULL) 
   {
     errno = EINVAL;
     return -1;
   }
-}
- // Have to clear errors from this part onwards
-memset(out, 0, sizeof(*out));
-/* Derive the display name from the final path component. */
-const char *slash = strrchr(path, '/');
-const char *base = (slash != NULL) ? slash + 1 : path;
-strncpy(out->name, base, LED_NAME_MAX - 1);
-strncpy(out->dir_path, path, PATH_MAX - 1);
+
+  // Have to clear errors from this part onwards
+ memset(out, 0, sizeof(*out));
+
+ /* Derive the display name from the final path component. */
+ const char *slash = strrchr(path, '/');
+ const char *base = (slash != NULL) ? slash + 1 : path;
+ strncpy(out->name, base, LED_NAME_MAX - 1);
+ strncpy(out->dir_path, path, PATH_MAX - 1);
 
   int n = snprintf(out->brightness_path, PATH_MAX, "%s/brightness", path);
   if (n < 0 || n >= PATH_MAX) 
@@ -113,4 +114,35 @@ strncpy(out->dir_path, path, PATH_MAX - 1);
     errno = ENAMETOOLONG;
     return -1;
   }
+   
+  /* Confirm the brightness file actually exists and is accessible. */
+    if (access(out->brightness_path, F_OK) != 0) 
+  {
+    return -1;
+  }
+
+  /* max_brightness is informational; default to 1 if unreadable. */
+  char max_path[PATH_MAX];
+  n = snprintf(max_path, PATH_MAX, "%s/max_brightness", path);
+   if (n > 0 && n < PATH_MAX) 
+  {
+     int max_val = 0;
+     if (read_int_file(max_path, &max_val) == 0 && max_val > 0) 
+      {
+        out->max_brightness = max_val;
+      } 
+    else 
+    {
+      out->max_brightness = 1;
+    }
+  } 
+    else
+   {
+    out->max_brightness = 1;
+   }
+
+   return 0;
+}
+
+
 
