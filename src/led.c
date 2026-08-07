@@ -15,7 +15,7 @@
 // Name variants for "scroll lock" LED across kernel drivers.
 static const char *SCROLLLOCK_NAME_PATTERNS[] = { "scrolllock","scroll_lock","scroll-lock","scrl"};
 #define SCROLLLOCK_PATTERN_COUNT \
-    (sizeof(SCROLLLOCK_NAME_PATTERNS) / sizeof(SCROLLLOCK_NAME_PATTERNS[0]))  // C idiom for an array length operator.
+  (sizeof(SCROLLLOCK_NAME_PATTERNS) / sizeof(SCROLLLOCK_NAME_PATTERNS[0]))  // C idiom for an array length operator.
 
 // read_int_file - read a small integer out of a one-line sysfs file.    
 static int read_int_file (const char *path , int *out)
