@@ -25,15 +25,15 @@ char name[LED_NAME_MAX];         /* sysfs entry name, e.g. "input3::scrolllock" 
 char dir_path[PATH_MAX];         /* full path to the LED's sysfs directory */
 char brightness_path[PATH_MAX];  /* full path to <dir_path>/brightness */
 int  max_brightness;             /* value considered fully "on"; defaults to 1 if unreadable */
-} led_info_t;
+} led_t;
 
-int led_find_scrolllock(led_info_t *out);
+int led_find_scrolllock(led_t *out);
 /* The above function finds the scroll lock LED and fills the provided led_info_t structure like:
    led_find_scrolllock - scan LED_SYSFS_ROOT for a device whose name matches a known Scroll Lock LED naming pattern 
    (case-insensitive; handles "scrolllock", "scroll_lock", "scroll-lock", "scrl" variants). 
 */
 
-int led_list_all(led_info_t *out_arr, size_t max_entries, size_t *out_count);
+int led_list_all(led_t *out_arr, size_t max_entries, size_t *out_count);
 /* led_list_all - enumerate every LED device under LED_SYSFS_ROOT,regardless of name, into out_arr (capacity max_entries).
    The above function lists all available LEDs and fills the provided led_info_t array.
 */
@@ -41,16 +41,16 @@ int led_list_all(led_info_t *out_arr, size_t max_entries, size_t *out_count);
 /* led_load_from_path - build a led_t from an explicit LED directory
    path, bypassing auto-detection entirely.
 */
-int led_load_from_path(const char *path, led_info_t *out);
+int led_load_from_path(const char *path, led_t *out);
 
 /* led_read_brightness - read the current brightness value.
    Returns the value (>= 0) on success, -1 on error.
 */
-int led_read_brightness(const led_info_t *led);
+int led_read_brightness(const led_t *led);
 
-int led_set_brightness(const led_info_t *led, int value);   // write an arbitrary brightness value.
+int led_set_brightness(const led_t *led, int value);   // write an arbitrary brightness value.
 
-int led_turn_on(const led_info_t *led);
-int led_turn_off(const led_info_t*led);
+int led_turn_on(const led_t *led);
+int led_turn_off(const led_t*led);
 
 #endif
