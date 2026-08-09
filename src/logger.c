@@ -22,4 +22,43 @@ void logger_init(const char *ident, int use_syslog, int verbose)
         openlog(g_ident, LOG_PID, LOG_DAEMON);
     }
 }
+void logger_shutdown(void) 
+{
+    if (g_use_syslog) 
+    {
+        closelog();
+    }
+}
 
+// level_to_label - short uppercase tag for stderr output, e.g. "INFO".
+static const char *level_to_label(log_level_t level) 
+{
+    switch (level) 
+    {
+        case LOG_LEVEL_INFO:
+            return "INFO";
+        case LOG_LEVEL_WARN:
+            return "WARN";
+        case LOG_LEVEL_ERROR:
+            return "ERROR";
+        default:
+            return "LOG";
+    }
+}
+
+/* level_to_syslog_priority - map our small log_level_t enum onto the
+   standard syslog(3) priority levels. */
+   static int level_to_syslog_priority(log_level_t level) 
+   {
+    switch (level) 
+    {
+        case LOG_LEVEL_INFO:
+            return LOG_INFO;
+        case LOG_LEVEL_WARN:
+            return LOG_WARNING;
+        case LOG_LEVEL_ERROR:
+            return LOG_ERR;
+        default:
+            return LOG_INFO;
+    }
+}
