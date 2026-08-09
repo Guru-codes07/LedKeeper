@@ -62,3 +62,51 @@ static const char *level_to_label(log_level_t level)
             return LOG_INFO;
     }
 }
+/* log_emit - shared implementation behind log_info()/log_warn()/
+   log_error(). Writes to stderr unconditionally (aside from the
+   verbose gate on INFO) and additionally to syslog if enabled.
+*/
+static void log_emit(log_level_t level, const char *fmt, va_list args) 
+{
+    if (level == LOG_LEVEL_INFO && !g_verbose) 
+    {
+        return;
+    }
+
+/* va_list can only be safely traversed once; since we may need
+   to use it for both stderr and syslog output, copy it for each
+   use rather than passing the same va_list to two vfprintf/
+    vsyslog calls. 
+*/
+    
+ va_list stderr_args;
+ va_copy(stderr_args, args);
+ fprintf(stderr, "%s: [%s] ", g_ident, level_to_label(level));
+ vfprintf(stderr, fmt, stderr_args);
+ fprintf(stderr, "\n");
+ va_end(stderr_args);
+ 
+ if (g_use_syslog) 
+  {
+        va_list syslog_args;
+        va_copy(syslog_args, args);
+        vsyslog(level_to_syslog_priority(level), fmt, syslog_args);
+        va_end(syslog_args);
+    }
+}
+void log_info(const char *fmt, ...) 
+{
+    va_list args;
+    va_start(args, fmt);
+    log_emit(LOG_LEVEL_INFO, fmt, args);
+    va_end(args);
+}
+
+void log_warn(const char *fmt, ...)
+ {
+    va_list args;
+    va_start(args, fmt);
+    log_emit(LOG_LEVEL_WARN, fmt, args);
+    va_end(args);
+}
+
