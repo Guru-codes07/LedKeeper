@@ -110,3 +110,10 @@ void log_warn(const char *fmt, ...)
     va_end(args);
 }
 
+void log_error(const char *fmt, ...) 
+{
+    va_list args;
+    va_start(args, fmt);
+    log_emit(LOG_LEVEL_ERROR, fmt, args);
+    va_end(args);
+}
