@@ -1,1 +1,57 @@
+# ledkeeper.service
+# ledkeeper.service - systemd user service for LedKeeper
+#
+# Keeps the Scroll Lock LED (keyboard RGB) restored under Wayland
+# compositors (e.g. Hyprland) where the kernel resets it on keypress.
+#
+# This is a USER unit, not a system unit - it runs as your own user,
+# with no elevated privileges, tied to your login session rather than
+# boot. That's the right scope here: LED sysfs writes and Wayland
+# sessions are both per-user concerns.
+#
+# Install:
+#   mkdir -p ~/.config/systemd/user
+#   cp systemd/ledkeeper.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now ledkeeper.service
+#
+# Logs:
+#   journalctl --user -u ledkeeper -f
+#
+# Uninstall:
+#   systemctl --user disable --now ledkeeper.service
+#   rm ~/.config/systemd/user/ledkeeper.service
 
+[Unit]
+Description=LedKeeper - keeps the Scroll Lock LED (keyboard RGB) on under Wayland
+Documentation=https://github.com/Guru-codes07/LedKeeper
+# Wait for the graphical session (Hyprland/Wayland) to be up before
+# starting, since there's no point polling a LED before a session -
+# and the input/LED devices are typically only meaningful once the
+# session has actually started.
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+# %h expands to the user's home directory. This assumes `make install`
+# placed the binary at ~/.local/bin/ledkeeper - adjust if installed
+# elsewhere.
+ExecStart=%h/.local/bin/ledkeeper --daemon
+# Restart automatically if it ever exits non-zero (e.g. the LED
+# device temporarily disappears), but don't hammer restarts if it's
+# persistently failing.
+Restart=on-failure
+RestartSec=2s
+
+# Hardening: LedKeeper only needs to read/write one sysfs LED
+# attribute file - it has no business touching anything else, so
+# lock the rest of the filesystem down as a defense-in-depth measure.
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/sys/class/leds
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target
