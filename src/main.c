@@ -120,3 +120,66 @@ static int parse_args(int argc, char **argv, cli_options_t *opts)
     return 0;
 }
 
+// resolve_led - locate the LED to operate.
+static int resolve_led(const cli_options_t *opts, led_t *out) 
+{
+    if (opts->led_path_override != NULL) 
+    {
+        return led_load_from_path(opts->led_path_override, out);
+    }
+   
+    return led_find_scrolllock(out);
+}
+
+static int run_list_leds(void) 
+{
+    led_t leds[MAX_LISTED_LEDS];
+    size_t count = 0;
+
+    if (led_list_all(leds, MAX_LISTED_LEDS, &count) != 0) 
+    {
+        fprintf(stderr, "ledkeeper: failed to scan %s: %s\n",
+                LED_SYFS_ROOT, strerror(errno));
+        return 1;
+    }
+    
+    if (count == 0) 
+     {
+        printf("No LED devices found under %s\n", LED_SYFS_ROOT);
+        return 0;
+    }
+
+    for (size_t i = 0; i < count; i++) 
+    {
+    int brightness = led_read_brightness(&leds[i]);
+    printf("%-32s  max=%-3d  current=%d\n  %s\n",leds[i].name, leds[i].max_brightness,brightness, leds[i].dir_path);
+    }
+
+    return 0;
+}
+static int run_status(const cli_options_t *opts) 
+{
+    led_t led;
+
+    if (resolve_led(opts, &led) != 0) 
+    {
+    fprintf(stderr,"ledkeeper: could not find a Scroll Lock LED: %s\n""Try --list-leds to see what's available, or --led-path to specify one directly.\n",strerror(errno));
+    return 1;
+    }
+     int brightness = led_read_brightness(&led);
+    if (brightness < 0) 
+    {
+        fprintf(stderr, "ledkeeper: failed to read LED brightness: %s\n", strerror(errno));
+        return 1;
+    }
+
+    printf("LED:        %s\n", led.name);
+    printf("Path:       %s\n", led.dir_path);
+    printf("Brightness: %d (max %d)\n", brightness, led.max_brightness);
+    printf("State:      %s\n", brightness > 0 ? "ON" : "OFF");
+
+    return 0;
+}
+
+
+
