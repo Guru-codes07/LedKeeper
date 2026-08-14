@@ -228,6 +228,35 @@ static int run_daemon(const cli_options_t *opts)
     logger_shutdown();
     return (rc == 0) ? 0 : 1;
 }
+int main(int argc, char **argv) 
+{
+    cli_options_t opts;
+
+    if (parse_args(argc, argv, &opts) != 0) 
+    {
+        print_usage(argv[0]);
+        return 1;
+    }
+
+    switch (opts.mode) 
+    {
+        case MODE_HELP:
+            print_usage(argv[0]);
+            return 0;
+        case MODE_VERSION:
+            print_version();
+            return 0;
+        case MODE_LIST_LEDS:
+            return run_list_leds();
+        case MODE_STATUS:
+            return run_status(&opts);
+        case MODE_ONCE:
+            return run_once(&opts);
+        case MODE_DAEMON:
+        default:
+            return run_daemon(&opts);
+    }
+}
 
 
 
