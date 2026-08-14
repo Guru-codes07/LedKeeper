@@ -180,6 +180,54 @@ static int run_status(const cli_options_t *opts)
 
     return 0;
 }
+static int run_once(const cli_options_t *opts) 
+{
+    led_t led;
+
+    if (resolve_led(opts, &led) != 0) 
+    {
+        fprintf(stderr, "ledkeeper: could not find a Scroll Lock LED: %s\n",strerror(errno));
+        return 1;
+    }
+
+    if (led_turn_on(&led) != 0)
+     {
+        fprintf(stderr, "ledkeeper: failed to turn on LED \"%s\": %s\n",led.name, strerror(errno));
+        return 1;
+    }
+
+    printf("Turned on LED \"%s\"\n", led.name);
+    return 0;
+}
+
+static int run_daemon(const cli_options_t *opts) 
+{
+    logger_init("ledkeeper", 1 /* use_syslog */, opts->verbose);
+
+    led_t led;
+    if (resolve_led(opts, &led) != 0) 
+    {
+        log_error("could not find a Scroll Lock LED: %s", strerror(errno));
+        logger_shutdown();
+        return 1;
+    }
+
+    if (daemon_setup_signal_handlers() != 0) 
+    {
+        log_error("failed to install signal handlers: %s", strerror(errno));
+        logger_shutdown();
+        return 1;
+    }
+    
+    daemon_config_t config;
+    daemon_config_set_defaults(&config);
+    config.verbose = opts->verbose;
+
+    int rc = daemon_run(&led, &config);
+
+    logger_shutdown();
+    return (rc == 0) ? 0 : 1;
+}
 
 
 
