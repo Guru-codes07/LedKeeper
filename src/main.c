@@ -9,6 +9,7 @@
    dispatch only - it does not itself touch sysfs, signals, or
    logging internals directly.
 */
+
 #define _POSIX_C_SOURCE 200809L
 
 #include "daemon.h"
@@ -23,3 +24,99 @@
 #define MAX_LISTED_LEDS   64
 
 // run_mode_t - which action the user asked for via CLI flags.
+typedef enum 
+{
+    MODE_DAEMON = 0, /* default when no mode flag is given */
+    MODE_ONCE,
+    MODE_STATUS,
+    MODE_LIST_LEDS,
+    MODE_VERSION,
+    MODE_HELP,
+} run_mode_t;
+
+//  cli_options_t - parsed command-line state, passed around instead of using globals.
+typedef struct 
+{
+    run_mode_t mode;
+    const char *led_path_override; /* NULL unless --led-path was given */
+    int verbose;
+} cli_options_t;
+static void print_usage(const char *prog_name) 
+{
+    printf(
+        "Usage:\n"
+        "  %s [OPTIONS]\n"
+        "\n"
+        "Options:\n"
+        "  --daemon         Run continuously in the foreground (default if no options given)\n"
+        "  --once           Turn the LED on once and exit\n"
+        "  --status         Show the detected LED and its current state, then exit\n"
+        "  --list-leds      List every LED device under /sys/class/leds and exit\n"
+        "  --led-path PATH  Use PATH instead of auto-detecting the Scroll Lock LED\n"
+        "  -v, --verbose    Enable verbose logging\n"
+        "  --version        Show version and exit\n"
+        "  --help           Show this help and exit\n",prog_name);
+}
+static void print_version(void) 
+{
+    printf("ledkeeper %s\n", LEDKEEPER_VERSION);
+}
+
+/* parse_args - fill *opts from argv. Returns 0 on success, -1 on an
+   unrecognized option or missing required argument (getopt_long
+   already printed a message to stderr in that case).
+*/
+static int parse_args(int argc, char **argv, cli_options_t *opts) 
+{
+    static const struct option long_opts[] = {
+        {"daemon",    no_argument,       NULL, 'd'},
+        {"once",      no_argument,       NULL, 'o'},
+        {"status",    no_argument,       NULL, 's'},
+        {"list-leds", no_argument,       NULL, 'l'},
+        {"led-path",  required_argument, NULL, 'p'},
+        {"verbose",   no_argument,       NULL, 'v'},
+        {"version",   no_argument,       NULL, 'V'},
+        {"help",      no_argument,       NULL, 'h'},
+        {NULL, 0, NULL, 0},
+    };
+    
+    opts->mode = MODE_DAEMON;
+    opts->led_path_override = NULL;
+    opts->verbose = 0;
+
+    int c;
+    while ((c = getopt_long(argc, argv, "vh", long_opts, NULL)) != -1) {
+        switch (c) {
+            case 'd':
+                opts->mode = MODE_DAEMON;
+                break;
+            case 'o':
+                opts->mode = MODE_ONCE;
+                break;
+            case 's':
+                opts->mode = MODE_STATUS;
+                break;
+            case 'l':
+                opts->mode = MODE_LIST_LEDS;
+                break;
+             case 'p':
+                opts->led_path_override = optarg;
+                break;
+            case 'v':
+                opts->verbose = 1;
+                break;
+            case 'V':
+                opts->mode = MODE_VERSION;
+                break;
+            case 'h':
+                opts->mode = MODE_HELP;
+                break;
+            default:
+                /* getopt_long already printed "invalid option" to stderr */
+                return -1;
+        }
+    }
+
+    return 0;
+}
+
