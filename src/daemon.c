@@ -43,3 +43,54 @@ void daemon_config_set_defaults(daemon_config_t *config)
 
     return 0;
 }
+
+int daemon_should_exit(void) 
+
+{
+    return g_shutdown_requested != 0;
+}
+
+static void sleep_for_ms(int ms) 
+{
+    struct timespec ts;
+    ts.tv_sec = ms / 1000;
+    ts.tv_nsec = (long)(ms % 1000) * 1000000L;
+    nanosleep(&ts, NULL);
+}
+int daemon_run(const led_t *led, const daemon_config_t *config) 
+{
+    if (led == NULL || config == NULL) 
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    log_info("monitoring \"%s\" every %dms", led->name, config->poll_interval_ms);
+
+    while (!daemon_should_exit()) 
+    {
+        int brightness = led_read_brightness(led);
+
+        if (brightness < 0) 
+        {
+            log_error("failed to read LED brightness: %s", strerror(errno));
+            return -1;
+        }
+         if (brightness == 0) 
+         {
+            if (led_turn_on(led) != 0) 
+            {
+                log_error("failed to restore LED: %s", strerror(errno));
+                return -1;
+            }
+
+            log_info("restored LED \"%s\"", led->name);
+        }
+
+        sleep_for_ms(config->poll_interval_ms);
+    }
+     
+    log_info("shutdown signal received, exiting");
+
+    return 0;
+}
