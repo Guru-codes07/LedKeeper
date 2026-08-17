@@ -21,7 +21,7 @@ static const char *SCROLLLOCK_NAME_PATTERNS[] = { "scrolllock","scroll_lock","sc
 static int read_int_file (const char *path , int *out)
 {
     int fd = open(path,O_RDONLY);
-    if(fd<=0)
+    if(fd<0)
     {
         return -1;
     }
